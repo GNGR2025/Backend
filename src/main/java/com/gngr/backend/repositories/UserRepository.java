@@ -10,6 +10,8 @@ import com.gngr.backend.entities.Users;
 @Repository
 public interface UserRepository extends JpaRepository<Users, Long> {
 
-    Optional<Users> findByPhoneNumber(String phoneNumber);
+    //Optional<Users> findByPhoneNumber(String phoneNumber);
+
+    Optional<Users> findByEmail(String email);
 
 }

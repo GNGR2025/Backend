@@ -7,8 +7,9 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.gngr.backend.entities.dtos.AuthResponse;
-import com.gngr.backend.entities.dtos.OtpVerificationRequest;
-import com.gngr.backend.entities.dtos.PhoneRequest;
+import com.gngr.backend.entities.dtos.LoginRequest;
+
+import com.gngr.backend.entities.dtos.SignupRequest;
 import com.gngr.backend.services.AuthService;
 
 import lombok.RequiredArgsConstructor;
@@ -20,16 +21,14 @@ public class AuthController {
 
     private final AuthService authService;
 
-    @PostMapping("/send-otp")
-    public ResponseEntity<String> sendOtp(@RequestBody PhoneRequest request) {
-        authService.sendOtp(request.getPhoneNumber());
-        return ResponseEntity.ok("OTP sent successfully");
+    @PostMapping("/signup")
+    public ResponseEntity<AuthResponse> signup(@RequestBody SignupRequest request) {
+        return ResponseEntity.ok(authService.signup(request));
     }
 
-    @PostMapping("/verify-otp")
-    public ResponseEntity<AuthResponse> verifyOtp(@RequestBody OtpVerificationRequest request) {
-        AuthResponse response = authService.verifyOtp(request.getPhoneNumber(), request.getOtpCode());
-        return ResponseEntity.ok(response);
+    @PostMapping("/login")
+    public ResponseEntity<AuthResponse> login(@RequestBody LoginRequest request) {
+        return ResponseEntity.ok(authService.login(request));
     }
-
 }
+

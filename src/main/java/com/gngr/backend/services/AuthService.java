@@ -1,15 +1,13 @@
 package com.gngr.backend.services;
 
-import java.time.LocalDateTime;
-
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
-import com.gngr.backend.entities.OtpRequests;
 import com.gngr.backend.entities.Users;
 import com.gngr.backend.entities.dtos.AuthResponse;
-import com.gngr.backend.repositories.OtpRepository;
+import com.gngr.backend.entities.dtos.LoginRequest;
+import com.gngr.backend.entities.dtos.SignupRequest;
 import com.gngr.backend.repositories.UserRepository;
 
 import lombok.RequiredArgsConstructor;
@@ -18,57 +16,40 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class AuthService {
 
-    @Autowired
     private final UserRepository userRepository;
-
-    @Autowired
-    private final OtpRepository otpRepository;
-
-    @Autowired
     private final JwtUtil jwtUtil;
-
-    @Autowired
     private final CustomUserDetailsService userDetailsService;
+    private final PasswordEncoder passwordEncoder; 
 
-    public void sendOtp(String phoneNumber) {
-        String otp = generateOtp();
-        OtpRequests otpEntity = new OtpRequests();
-        otpEntity.setPhoneNumber(phoneNumber);
-        otpEntity.setOtpCode(otp);
-        otpEntity.setExpiresAt(LocalDateTime.now().plusMinutes(5));
-        otpRepository.save(otpEntity);
-
-        System.out.println("Generated OTP for " + phoneNumber + ": " + otp);
-    }
-
-    public AuthResponse verifyOtp(String phoneNumber, String otpCode) {
-        OtpRequests otpEntity = otpRepository.findTopByPhoneNumberOrderByCreatedAtDesc(phoneNumber);
-
-        if (otpEntity == null) {
-
-            System.out.println("otp not found");
-
+    public AuthResponse signup(SignupRequest request) {
+        if (userRepository.findByEmail(request.getEmail()).isPresent()) {
+            throw new RuntimeException("Email already registered");
         }
 
-        if (!otpEntity.getOtpCode().equals(otpCode) || otpEntity.getExpiresAt().isBefore(LocalDateTime.now())) {
-            throw new RuntimeException("Invalid or expired OTP");
-        }
+        Users user = new Users();
+        user.setEmail(request.getEmail());
+        user.setPassword(passwordEncoder.encode(request.getPassword())); 
+        user.setUsername(request.getUsername());
+        user.setRole(Users.Role.PLAYER);
 
-        Users user = userRepository.findByPhoneNumber(phoneNumber)
-                .orElseGet(() -> {
-                    Users newUser = new Users();
-                    newUser.setPhoneNumber(phoneNumber);
-                    newUser.setRole(Users.Role.PLAYER);
-                    return userRepository.save(newUser);
-                });
+        userRepository.save(user);
 
-        UserDetails userDetails = userDetailsService.loadUserByUsername(user.getPhoneNumber());
+        UserDetails userDetails = userDetailsService.loadUserByUsername(user.getEmail());
         String token = jwtUtil.generateToken(userDetails);
         return new AuthResponse(token);
     }
 
-    private String generateOtp() {
-        return String.valueOf((int) (Math.random() * 900000) + 100000);
-    }
+    public AuthResponse login(LoginRequest request) {
+        Users user = userRepository.findByEmail(request.getEmail())
+                .orElseThrow(() -> new RuntimeException("Invalid credentials"));
 
+        if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
+            throw new RuntimeException("Invalid credentials");
+        }
+
+        UserDetails userDetails = userDetailsService.loadUserByUsername(user.getEmail());
+        String token = jwtUtil.generateToken(userDetails);
+        return new AuthResponse(token);
+    }
 }
+

@@ -29,8 +29,8 @@ public class OtpRequests {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "phone_number", nullable = false, length = 15)
-    private String phoneNumber;
+    @Column(name = "phone_number", nullable = true, length = 15)
+    private String phoneNumber = "1234567890";
 
     @Column(name = "otp_code", nullable = false, length = 6)
     private String otpCode;

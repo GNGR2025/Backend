@@ -8,7 +8,7 @@ import com.gngr.backend.entities.OtpRequests;
 @Repository
 public interface OtpRepository extends JpaRepository<OtpRequests,Long> {
 
-    OtpRequests findTopByPhoneNumberOrderByCreatedAtDesc(String phoneNumber);
+    // OtpRequests findTopByPhoneNumberOrderByCreatedAtDesc(String phoneNumber);
     
 
 }
